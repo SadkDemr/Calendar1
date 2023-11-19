@@ -1,0 +1,212 @@
+﻿@model Tuple<List<Calendar1.Models.EmployeeAttendance>, List<Calendar1.Models.TeamAttendance>>
+
+@using System.Globalization
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_CalendarLayout.cshtml";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/Css/plugins/fontawesome-free/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="~/Css/dist/css/adminlte.min.css">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+
+    <!-- jQuery -->
+    <script src="~/Css/plugins/jquery/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // İlk Tablo Tarih Seçimi
+            $("#yearSelect, #monthSelect").change(function () {
+                var year = $("#yearSelect").val();
+                var month = $("#monthSelect").val();
+                console.log("Year: ", year);
+                console.log("Month: ", month);
+                updateTable('employeeTable', year, month);
+            });
+
+            // İkinci Tablo Tarih Seçimi
+            $("#teamYearSelect, #teamMonthSelect, #teamDaySelect").change(function () {
+                var yearTeam = $("#teamYearSelect").val();
+                var monthTeam = $("#teamMonthSelect").val();
+                var dayTeam = $("#teamDaySelect").val();
+                console.log("Year: ", yearTeam);
+                console.log("Month: ", monthTeam);
+                console.log("Day: ", dayTeam);
+                updateTable('teamTable', yearTeam, monthTeam, dayTeam);
+            });
+
+            // Dinamik tablo güncelleme işlemi
+            function updateTable(tableType, year, month, day) {
+                var newUrl = '/Home/Index?tableType=' + tableType + '&year=' + year + '&month=' + month;
+                if (day) {
+                    newUrl += '&day=' + day;
+                }
+                window.location.href = newUrl;
+            }
+        });
+
+
+    </script>
+
+</head>
+<body class="hold-transition sidebar-mini">
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+
+                    <!-- Yıl ve Ay Seçimi İçin ComboBoxlar -->
+                    <div class="select-boxes">
+                        <select id="yearSelect">
+                            <option value="2023" @(ViewBag.Year == 2023 ? "selected" : "")>2023</option>
+                            <option value="2024" @(ViewBag.Year == 2024 ? "selected" : "")>2024</option>
+                        </select>
+
+                        <select id="monthSelect">
+                            <option value="">Ay Seçin</option>
+                            @for (int month = 1; month <= 12; month++)
+                            {
+                                <option value="@month" @(ViewBag.Month == month ? "selected" : "")>@CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+                            }
+                        </select>
+
+                    </div>
+
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Çalışan Katılım Raporu</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Çalışan Adı</th>
+                                        <th>Progress</th>
+                                        <th>Toplam Gün</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int counter = 1;
+                                    }
+                                    @foreach (var attendance in Model.Item1)
+                                    {
+                                        var daysCount = attendance.AttendanceDates.Count;
+                                        string progressColor = daysCount < 7 ? "bg-danger" : "bg-success";
+                                        <tr>
+                                            <td>@counter</td>
+                                            <td>@attendance.EmployeeName</td>
+                                            <td>
+                                                <div class="progress progress-xs">
+                                                    <div class="progress-bar @progressColor" style="width: @(daysCount * 10)%"></div>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge @progressColor">@daysCount</span></td>
+                                        </tr>
+                                        counter++;
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                                    {
+                                        <div class="alert alert-danger">
+                                            @ViewBag.ErrorMessage
+                                        </div>
+                                    }
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+                    <!-- İkinci Tablo İçin Kodlar -->
+                    <div class="col-md-6">
+                        <!-- Yıl, ay ve gün seçimleri için ComboBoxlar -->
+                        <div class="select-boxes">
+                            <select id="teamYearSelect">
+                                <option value="2023" @(ViewBag.Year == 2023 ? "selected" : "")>2023</option>
+                                <option value="2024" @(ViewBag.Year == 2024 ? "selected" : "")>2024</option>
+                            </select>
+
+                            <select id="teamMonthSelect">
+                                <option value="">Ay Seçin</option>
+                                @for (int month = 1; month <= 12; month++)
+                                {
+                                    <option value="@month" @(ViewBag.Month == month ? "selected" : "")>@CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+                                }
+                            </select>
+
+                            <select id="teamDaySelect">
+                                @for (int day = 1; day <= 31; day++)
+                                {
+                                    <option value="@day" @(ViewBag.Day == day ? "selected" : "")>@day</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Çalışan Katılım Raporu</h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Takım Adı</th>
+                                            <th>Ofiste Olan Çalışan Sayısı</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            int index = 1;
+                                            foreach (var team in Model.Item2)
+                                            {
+                                                <tr>
+                                                    <td>@index</td>
+                                                    <td>@team.TeamName</td> <!-- Takım adını burada gösteriyoruz -->
+                                                    <td>@team.EmployeeCount</td> <!-- Çalışan sayısını burada gösteriyoruz -->
+                                                </tr>
+                                                index++;
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+    <!-- ./wrapper -->
+    <!-- Bootstrap 4 -->
+    <script src="~/Css/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="~/Css/dist/js/adminlte.min.js"></script>
+    <!-- AdminLTE for demo purposes -->
+    <script src="~/Css/dist/js/demo.js"></script>
+</body>
+</html>
