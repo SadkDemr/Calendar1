@@ -169,6 +169,11 @@
             var checkbox = document.getElementById('drop-remove');
             var calendarEl = document.getElementById('calendar');
 
+            // Son ziyaret edilen ayı localStorage'dan alın
+            var lastViewedMonth = localStorage.getItem('lastViewedMonth') || new Date().toISOString().slice(0, 7);
+
+            console.log('Son ziyaret edilen ay:', lastViewedMonth);
+
             // initialize the external events
             // -----------------------------------------------------------------
 
@@ -188,6 +193,13 @@
 
             var calendar = new Calendar(calendarEl, {
                 plugins: ['bootstrap', 'interaction', 'dayGrid', 'timeGrid'],
+                // Takvimin başlangıç tarihini ayarlayın
+                initialDate: lastViewedMonth ? lastViewedMonth : new Date(),
+                datesSet: function (dateInfo) {
+                    console.log('datesSet çalıştı, ay:', dateInfo.startStr);
+                    // Son ziyaret edilen ayı localStorage'a kaydedin
+                    localStorage.setItem('lastViewedMonth', dateInfo.startStr);
+                },
                 header: {
                     left: 'prev,next today',
                     center: 'title',
@@ -202,14 +214,17 @@
         success: function(data) {
             var events = [];
             for(var i = 0; i < data.length; i++) {
-                var color = teamColors[data[i].team] || "#000000";  // Eğer takıma özel bir renk tanımlı değilse siyah olarak belirleniyor
+                var eventData = data[i];
+                var team = eventData.team;
+                var color = teamColors[team] || "#000000"; // Fallback to black if no color is defined
                 events.push({
-                    title: data[i].title,
-                    start: data[i].start,
-                    end: data[i].end,
+                    title: eventData.title,
+                    start: eventData.start,
+                    end: eventData.end,
                     color: color,
-                    team: data[1].team
+                    team: team // Ensure team data is correctly set
                 });
+
             }
             successCallback(events);
         },
@@ -226,12 +241,14 @@
     // "Evet" düğmesine tıklanırsa
     $('#confirmDelete').off('click').on('click', function() {
         // Olayı silmek için sunucu tarafına bir istekte bulunun
-        console.log(info.event.extendedProps); // Burada tüm genişletilmiş özellikleri görüntüleyebilirsiniz.
-        if (info.event.extendedProps.team) {
-            console.log("Takım Bilgisi: ", info.event.extendedProps.team);
+       
+        var team = info.event.extendedProps.team;
+        if (team) {
+            console.log("Takım Bilgisi: ", team);
         } else {
             console.log("Takım bilgisi bulunamadı!");
         }
+
         $.ajax({
             url: '@Url.Action("DeleteEventInExcel", "Home")',
             type: 'POST',
@@ -267,7 +284,7 @@
         title: eventTitle,  // Burada info.draggedEl.title yerine direkt eventTitle'ı kullanıyoruz.
         start: info.dateStr,  // Sürüklenip bırakılan tarihe erişim
         end: info.dateStr,  // Şimdilik başlangıçla aynı değeri atıyoruz
-        team: eventTeam
+        team: eventTeam || 'Unknown'
     };
 
     $.ajax({
@@ -296,7 +313,12 @@
 
             });
 
-            calendar.render();
+            var lastViewedMonth = localStorage.getItem('lastViewedMonth');
+            if (lastViewedMonth) {
+                calendar.gotoDate(lastViewedMonth); // Son ziyaret edilen aya git
+            }
+
+            calendar.render();ç
             // $('#calendar').fullCalendar()
 
             /* ADDING EVENTS */

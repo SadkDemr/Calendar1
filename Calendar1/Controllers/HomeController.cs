@@ -49,7 +49,7 @@ namespace Calendar1.Controllers
                 ViewBag.Month = month.HasValue ? month.Value : (int?)null;
 
                 // İkinci tabloyu güncelle
-                teamAttendanceRecords = _excelService.GetTeamAttendanceForDayMonthAndYear(day.Value, month.Value, year.Value, "C:\\Users\\Sadik Demir\\Desktop\\calendar.xlsx");
+                teamAttendanceRecords = _excelService.GetTeamAttendanceForDayMonthAndYear(day.Value, month.Value, year.Value);
 
                 foreach (var teamAttendance in teamAttendanceRecords)
                 {
@@ -71,6 +71,8 @@ namespace Calendar1.Controllers
         [HttpGet]
         public ActionResult AddDeskRecord()
         {
+            string projectDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(projectDirectory, "calendar.xlsx");
             // Ayların listesini oluşturun
             var months = CultureInfo.CurrentCulture.DateTimeFormat.MonthNames
                 .Where(m => !string.IsNullOrEmpty(m)) // Boş olmayan ay isimlerini alır
@@ -79,7 +81,7 @@ namespace Calendar1.Controllers
 
             ViewBag.Months = new SelectList(months, "Value", "Name");
 
-            var employeesFromExcel = ExcelService.GetEmployeeDetailsFromExcel("C:\\Users\\Sadik Demir\\Desktop\\calendar.xlsx"); // Doğru dosya yolu
+            var employeesFromExcel = ExcelService.GetEmployeeDetailsFromExcel(filePath); // Doğru dosya yolu
             var model = new EmployeeDesk
             {
                 Employees = employeesFromExcel

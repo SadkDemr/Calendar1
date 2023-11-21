@@ -24,12 +24,12 @@ public class ExcelService
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // EPPlus 5.0 ve sonrası için lisans bilgisi
     }
 
-    public List<TeamAttendance> GetTeamAttendanceForDayMonthAndYear(int day, int month, int year, string excelFilePath)
+    public List<TeamAttendance> GetTeamAttendanceForDayMonthAndYear(int day, int month, int year)
     {
         List<TeamAttendance> teamAttendanceRecords = new List<TeamAttendance>();
         List<string> teamNames = new List<string>(); // Takım isimlerini saklamak için bir liste ekleyin
 
-        using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+        using (var package = new ExcelPackage(new FileInfo(_excelPath)))
         {
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
@@ -433,7 +433,7 @@ public class ExcelService
                         bool canAssign = true;
 
                         // Gün içinde en fazla 10 kişi olmasını kontrol et
-                        if (dailyEmployeeAssignments[day].Count >= 10)
+                        if (dailyEmployeeAssignments[day].Count >= 8)
                         {
                             canAssign = false;
                         }

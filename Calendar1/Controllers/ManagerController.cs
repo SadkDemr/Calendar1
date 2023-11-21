@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -14,13 +15,17 @@ namespace Calendar1.Controllers
         private ExcelService _excelService;
 
         public ManagerController()
-        {                                
-            _excelService = new ExcelService("C:\\Users\\Sadik Demir\\Desktop\\calendar.xlsx");
+        {
+            string projectDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(projectDirectory, "calendar.xlsx");
+            _excelService = new ExcelService(filePath);
         }
         // GET: Manager
         [HttpGet]
         public ActionResult ManagerCalendar()
         {
+            string projectDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string filePath = Path.Combine(projectDirectory, "calendar.xlsx");
             // Ayların listesini oluşturun
             var months = CultureInfo.CurrentCulture.DateTimeFormat.MonthNames
                 .Where(m => !string.IsNullOrEmpty(m)) // Boş olmayan ay isimlerini alır
@@ -29,7 +34,7 @@ namespace Calendar1.Controllers
 
             ViewBag.Months = new SelectList(months, "Value", "Name");
 
-            var managersFromExcel = ExcelService.GetEmployeeDetailsFromExcelManager("C:\\Users\\Sadik Demir\\Desktop\\calendar.xlsx"); // Doğru dosya yolu
+            var managersFromExcel = ExcelService.GetEmployeeDetailsFromExcelManager(filePath); // Doğru dosya yolu
             var model = new EmployeeDesk
             {
                 Managers = managersFromExcel
