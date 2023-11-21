@@ -68,6 +68,14 @@
 
                                 <button type="submit" class="btn btn-block btn-danger btn-lg">Tüm Ayı Sil</button>
                             }
+                            <button class="btn btn-block btn-default btn-lg" onclick="exportEventsToExcel()">Etkinlikleri Excel'e Aktar</button>
+                            <script>
+                                $(document).ready(function () {
+                                    $("#exportButton").click(function () {
+                                        exportEventsToExcel();
+                                    });
+                                });
+                            </script>
                         </div>
 
                         <script type="text/javascript">
@@ -127,6 +135,37 @@
     <script src="~/Css/plugins/fullcalendar-bootstrap/main.min.js"></script>
     <!-- Page specific script -->
     <script>
+
+        function exportEventsToExcel() {
+                var selectedMonth = $('#selectedMonthDropdown').val(); // Seçilen ayı al
+                var monthName = $("#selectedMonthDropdown option:selected").text(); // Ayın adını al
+
+                var events = calendar.getEvents();
+                var eventData = events.map(function (event) {
+                    return {
+                        title: event.title,
+                        start: event.start.toISOString(),
+                        end: event.end ? event.end.toISOString() : null,
+                        team: event.extendedProps.team
+                        // Diğer gerekli bilgiler
+                    };
+                });
+
+                // AJAX ile verileri sunucuya gönderin
+                $.ajax({
+                    url: '@Url.Action("ExportEventsToExcel", "Home")', // Controller Action'ın URL'si
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ events: eventData, monthName: monthName }), // Ay adını da gönder
+                    success: function (response) {
+                        console.log('Etkinlikler başarıyla gönderildi:', response);
+                    },
+                    error: function (error) {
+                        console.error('Etkinlikleri gönderirken bir hata oluştu:', error);
+                    }
+                });
+        }
+
         $(function () {
 
             // Takımlar için renk tanımlamaları
@@ -151,6 +190,8 @@
                     })
                 })
             }
+
+
 
             ini_events($('#external-events div.external-event'))
 
@@ -186,7 +227,7 @@
                         backgroundColor: window.getComputedStyle(eventEl, null).getPropertyValue('background-color'),
                         borderColor: window.getComputedStyle(eventEl, null).getPropertyValue('background-color'),
                         textColor: window.getComputedStyle(eventEl, null).getPropertyValue('color'),
-                        
+
                     };
                 }
             });
@@ -241,7 +282,7 @@
     // "Evet" düğmesine tıklanırsa
     $('#confirmDelete').off('click').on('click', function() {
         // Olayı silmek için sunucu tarafına bir istekte bulunun
-       
+
         var team = info.event.extendedProps.team;
         if (team) {
             console.log("Takım Bilgisi: ", team);
@@ -258,7 +299,7 @@
                 end: info.event.end ? info.event.end.toISOString() : info.event.start.toISOString(),
                 team: info.event.extendedProps.team
             },
-            
+
             success: function(response) {
                 if (response.success) {
                     info.event.remove(); // FullCalendar'da olayı sil
@@ -279,7 +320,7 @@
     // Dışarıdan sürüklenen öğenin bilgilerine erişim
     var draggedElement = info.draggedEl;
     var eventTitle = $(draggedElement).data('employee');
-    var eventTeam = $(draggedElement).data('team'); 
+    var eventTeam = $(draggedElement).data('team');
     var eventData = {
         title: eventTitle,  // Burada info.draggedEl.title yerine direkt eventTitle'ı kullanıyoruz.
         start: info.dateStr,  // Sürüklenip bırakılan tarihe erişim
@@ -318,7 +359,7 @@
                 calendar.gotoDate(lastViewedMonth); // Son ziyaret edilen aya git
             }
 
-            calendar.render();ç
+            calendar.render();
             // $('#calendar').fullCalendar()
 
             /* ADDING EVENTS */

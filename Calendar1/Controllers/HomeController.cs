@@ -190,6 +190,13 @@ namespace Calendar1.Controllers
         }
 
 
+        [HttpPost]
+        public ActionResult ExportEventsToExcel(List<EmployeeDeskEventViewModel> events, string monthName)
+        {
+            _excelService.CreateExcelFile(events, monthName);
+
+            return Json(new { success = true, message = $"{monthName} ayına ait etkinlikler Excel'e aktarıldı." });
+        }
 
 
 

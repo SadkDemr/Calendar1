@@ -560,6 +560,50 @@ public class ExcelService
         }
     }
 
+    public void CreateExcelFile(List<EmployeeDeskEventViewModel> events, string monthName)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using (var package = new ExcelPackage())
+        {
+            var worksheet = package.Workbook.Worksheets.Add("Events");
+
+            // Başlıkları ekle
+            worksheet.Cells["A1"].Value = "Tarih";
+            worksheet.Cells["B1"].Value = "Çalışan";
+            worksheet.Cells["C1"].Value = "Başlangıç";
+            worksheet.Cells["D1"].Value = "Bitiş";
+            worksheet.Cells["E1"].Value = "Takım";
+
+            int row = 2;
+
+
+            foreach (EmployeeDeskEventViewModel e in events)
+            {
+                worksheet.Cells[row, 1].Value = string.Join(", ", e.AssignedDays);
+                worksheet.Cells[row, 2].Value = e.title;
+                worksheet.Cells[row, 3].Value = e.start;
+                worksheet.Cells[row, 4].Value = e.end;
+                worksheet.Cells[row, 5].Value = e.team;
+
+                // Hücre stillerini ayarlayın
+                if (e.team == "Bankacılık")
+                    worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Blue);
+                else if (e.team == "Dijital Uygulama")
+                    worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+                row++;
+            }
+
+            // Dosya adını ayın adına göre ayarlayın
+            string fileName = $"{monthName}.xlsx";
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string fullPath = Path.Combine(desktopPath, fileName);
+
+            var file = new FileInfo(fullPath);
+            package.SaveAs(file);
+
+        }
+    }
 
 
 
