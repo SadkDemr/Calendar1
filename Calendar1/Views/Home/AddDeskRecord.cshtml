@@ -68,14 +68,7 @@
 
                                 <button type="submit" class="btn btn-block btn-danger btn-lg">Tüm Ayı Sil</button>
                             }
-                            <button class="btn btn-block btn-default btn-lg" onclick="exportEventsToExcel()">Etkinlikleri Excel'e Aktar</button>
-                            <script>
-                                $(document).ready(function () {
-                                    $("#exportButton").click(function () {
-                                        exportEventsToExcel();
-                                    });
-                                });
-                            </script>
+                            <button class="btn btn-block btn-default btn-lg" id="exportButton">Etkinlikleri Excel'e Aktar</button>
                         </div>
 
                         <script type="text/javascript">
@@ -136,35 +129,6 @@
     <!-- Page specific script -->
     <script>
 
-        function exportEventsToExcel() {
-                var selectedMonth = $('#selectedMonthDropdown').val(); // Seçilen ayı al
-                var monthName = $("#selectedMonthDropdown option:selected").text(); // Ayın adını al
-
-                var events = calendar.getEvents();
-                var eventData = events.map(function (event) {
-                    return {
-                        title: event.title,
-                        start: event.start.toISOString(),
-                        end: event.end ? event.end.toISOString() : null,
-                        team: event.extendedProps.team
-                        // Diğer gerekli bilgiler
-                    };
-                });
-
-                // AJAX ile verileri sunucuya gönderin
-                $.ajax({
-                    url: '@Url.Action("ExportEventsToExcel", "Home")', // Controller Action'ın URL'si
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ events: eventData, monthName: monthName }), // Ay adını da gönder
-                    success: function (response) {
-                        console.log('Etkinlikler başarıyla gönderildi:', response);
-                    },
-                    error: function (error) {
-                        console.error('Etkinlikleri gönderirken bir hata oluştu:', error);
-                    }
-                });
-        }
 
         $(function () {
 
@@ -190,7 +154,6 @@
                     })
                 })
             }
-
 
 
             ini_events($('#external-events div.external-event'))
@@ -362,6 +325,41 @@
             calendar.render();
             // $('#calendar').fullCalendar()
 
+
+            function exportEventsToExcel() {
+                console.log('Etkinlikler başarıyla gönderildi3:');
+                var selectedMonth = $('#selectedMonthDropdown').val(); // Seçilen ayı al
+                var monthName = $("#selectedMonthDropdown option:selected").text(); // Ayın adını al
+
+                var events = calendar.getEvents();
+                var eventData = events.map(function (event) {
+                    return {
+                        title: event.title,
+                        start: event.start.toISOString(),
+                        end: event.end ? event.end.toISOString() : null,
+                        team: event.extendedProps.team
+                        // Diğer gerekli bilgiler
+                    };
+                });
+
+                // AJAX ile verileri sunucuya gönderin
+                $.ajax({
+                    url: '@Url.Action("ExportEventsToExcel", "Home")', // Controller Action'ın URL'si
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ events: eventData, monthName: monthName }), // Ay adını da gönder
+                    success: function (response) {
+                        console.log('Etkinlikler başarıyla gönderildi:', response);
+                    },
+                    error: function (error) {
+                        console.error('Etkinlikleri gönderirken bir hata oluştu:', error);
+                    }
+                });
+            }
+
+            // Buton event handler'ını burada tanımlayın
+            $('#exportButton').click(exportEventsToExcel);
+
             /* ADDING EVENTS */
             var currColor = '#3c8dbc' //Red by default
             //Color chooser button
@@ -401,5 +399,6 @@
                 $('#new-event').val('')
             })
         })
+
     </script>
 </body>

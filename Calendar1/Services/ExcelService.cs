@@ -1,5 +1,6 @@
 ﻿using Calendar1.Models;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -560,52 +561,86 @@ public class ExcelService
         }
     }
 
-    public void CreateExcelFile(List<EmployeeDeskEventViewModel> events, string monthName)
+    public void CreateExcelFile(List<EmployeeDeskEventViewModel> events, string monthName, int year)
     {
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using (var package = new ExcelPackage())
         {
             var worksheet = package.Workbook.Worksheets.Add("Events");
 
-            // Başlıkları ekle
-            worksheet.Cells["A1"].Value = "Tarih";
-            worksheet.Cells["B1"].Value = "Çalışan";
-            worksheet.Cells["C1"].Value = "Başlangıç";
-            worksheet.Cells["D1"].Value = "Bitiş";
-            worksheet.Cells["E1"].Value = "Takım";
+            // Create a dictionary to map day numbers to column indexes
+            var dayColumnMap = new Dictionary<int, int>();
 
-            int row = 2;
+            // Find all unique days and sort them
+            var uniqueDays = events.SelectMany(e => e.AssignedDays).Distinct().OrderBy(day => day).ToList();
 
-
-            foreach (EmployeeDeskEventViewModel e in events)
+            // Set column headers for days
+            int columnIndex = 1;
+            foreach (var day in uniqueDays)
             {
-                worksheet.Cells[row, 1].Value = string.Join(", ", e.AssignedDays);
-                worksheet.Cells[row, 2].Value = e.title;
-                worksheet.Cells[row, 3].Value = e.start;
-                worksheet.Cells[row, 4].Value = e.end;
-                worksheet.Cells[row, 5].Value = e.team;
+                // Check if the day is valid for the given month and year
+                int daysInMonth = DateTime.DaysInMonth(year, DateTime.ParseExact(monthName, "MMMM", CultureInfo.CurrentCulture).Month);
+                if (day < 1 || day > daysInMonth)
+                {
+                    Console.WriteLine($"Invalid day: {day} in {monthName} {year}");
+                    continue;
+                }
 
-                // Hücre stillerini ayarlayın
-                if (e.team == "Bankacılık")
-                    worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Blue);
-                else if (e.team == "Dijital Uygulama")
-                    worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Red);
-
-                row++;
+                DateTime dateValue = new DateTime(year, DateTime.ParseExact(monthName, "MMMM", CultureInfo.CurrentCulture).Month, day);
+                worksheet.Cells[1, columnIndex].Value = dateValue.ToString("dd MMMM yyyy dddd");
+                dayColumnMap[day] = columnIndex;
+                columnIndex++;
             }
 
-            // Dosya adını ayın adına göre ayarlayın
-            string fileName = $"{monthName}.xlsx";
+            // Check if the events list is empty
+            if (events == null || !events.Any())
+            {
+                Console.WriteLine("Events list is empty.");
+                return; // Exit if the list is empty
+            }
+
+            // Write data to the Excel sheet
+            foreach (var day in uniqueDays)
+            {
+                int row = 2; // Start from the second row for each day
+                foreach (var e in events.Where(x => x.AssignedDays.Contains(day)))
+                {
+                    if (!dayColumnMap.ContainsKey(day))
+                    {
+                        Console.WriteLine($"Day {day} is not mapped in dayColumnMap.");
+                        continue; // Skip this day if not mapped
+                    }
+
+                    var cell = worksheet.Cells[row, dayColumnMap[day]];
+                    cell.Value = e.title; // Write the employee's name
+
+                    // Set the cell color based on the team
+                    cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    switch (e.team)
+                    {
+                        case "Bankacılık":
+                            cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Blue);
+                            break;
+                        case "Dijital Uygulama":
+                            cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                            break;
+                            // Add more cases for other teams as needed
+                    }
+                    row++;
+                }
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            // Set the file name and save the package
+            string fileName = $"{monthName}_{year}.xlsx";
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string fullPath = Path.Combine(desktopPath, fileName);
 
-            var file = new FileInfo(fullPath);
+            FileInfo file = new FileInfo(fullPath);
             package.SaveAs(file);
-
         }
     }
-
-
 
     //Yonetciler Icin Olan Kısım
     public void AddDeskRecordManager(EmployeeDeskEventViewModel eventViewModel)
