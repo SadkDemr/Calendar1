@@ -138,6 +138,33 @@ namespace Calendar1.Controllers
             return RedirectToAction("ManagerCalendar");
         }
 
+        [HttpPost]
+        public void SetSelectedMonth(int selectedMonth)
+        {
+            Session["SelectedMonth"] = selectedMonth;
+        }
+
+        [HttpPost]
+        public ActionResult ExportEventsToExcel()
+        {
+            try
+            {
+                int selectedMonth = (int)(Session["SelectedMonth"] ?? DateTime.Now.Month);
+                int year = DateTime.Now.Year;
+                string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(selectedMonth);
+
+                // Excel dosyası oluşturma işlemi
+                _excelService.CreateMonthlyExcelFileManager(selectedMonth, year);
+
+                // Başarılı mesajı dön
+                return Json(new { success = true, message = $"{monthName} ayına ait etkinlikler Excel'e aktarıldı." });
+            }
+            catch (Exception ex)
+            {
+                // Hata durumunda hata mesajını dön
+                return Json(new { success = false, message = "Hata: " + ex.Message });
+            }
+        }
 
     }
 }

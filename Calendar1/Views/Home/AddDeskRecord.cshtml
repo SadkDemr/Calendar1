@@ -68,15 +68,31 @@
 
                                 <button type="submit" class="btn btn-block btn-danger btn-lg">Tüm Ayı Sil</button>
                             }
-                            <button class="btn btn-block btn-default btn-lg" id="exportButton">Etkinlikleri Excel'e Aktar</button>
+                            <!-- Export to Excel Form -->
+                            @using (Html.BeginForm("ExportEventsToExcel", "Home", FormMethod.Post, new { id = "exportExcelForm" }))
+                            {
+                                <select id="selectedMonthForExport" name="selectedMonth" class="form-control">
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        bool isSelected = (Session["SelectedMonth"] != null && (int)Session["SelectedMonth"] == i);
+                                        <option value="@i" @(isSelected ? "selected" : "")>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)</option>
+                                    }
+                                </select>
+
+                                <button type="submit" class="btn btn-block btn-default btn-lg">Etkinlikleri Excel'e Aktar</button>
+                            }
                         </div>
 
                         <script type="text/javascript">
-                            document.getElementById("selectedMonthDropdown").addEventListener("change", function () {
-                                var selectedMonth = this.value;
-                                document.getElementById("deleteSelectedMonth").value = selectedMonth;
-                            });
+                           $(document).ready(function() {
+                              $('#exportExcelForm').submit(function() {
+                                   var selectedMonth = $('#selectedMonthForExport').val();
+                                    // AJAX ile seçilen ayı Session'a kaydedin
+                                    $.post('@Url.Action("SetSelectedMonth", "Home")', { selectedMonth: selectedMonth });
+                                 });
+                        });
                         </script>
+
                     </div>
                 </div>
                 <!-- /.col -->

@@ -189,14 +189,36 @@ namespace Calendar1.Controllers
             return RedirectToAction("AddDeskRecord");
         }
 
+        [HttpPost]
+        public void SetSelectedMonth(int selectedMonth)
+        {
+            Session["SelectedMonth"] = selectedMonth;
+        }
+
 
         [HttpPost]
-        public ActionResult ExportEventsToExcel(List<EmployeeDeskEventViewModel> events, string monthName)
+        public ActionResult ExportEventsToExcel()
         {
-            _excelService.CreateExcelFile(events, monthName, 2023);
+            try
+            {
+                int selectedMonth = (int)(Session["SelectedMonth"] ?? DateTime.Now.Month);
+                int year = DateTime.Now.Year;
+                string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(selectedMonth);
 
-            return Json(new { success = true, message = $"{monthName} ayına ait etkinlikler Excel'e aktarıldı." });
+                // Excel dosyası oluşturma işlemi
+                _excelService.CreateMonthlyExcelFile(selectedMonth, year);
+
+                // Başarılı mesajı dön
+                return Json(new { success = true, message = $"{monthName} ayına ait etkinlikler Excel'e aktarıldı." });
+            }
+            catch (Exception ex)
+            {
+                // Hata durumunda hata mesajını dön
+                return Json(new { success = false, message = "Hata: " + ex.Message });
+            }
         }
+
+
 
 
 

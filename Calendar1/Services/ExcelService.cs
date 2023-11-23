@@ -561,84 +561,84 @@ public class ExcelService
         }
     }
 
-    public void CreateExcelFile(List<EmployeeDeskEventViewModel> events, string monthName, int year)
+    public void CreateMonthlyExcelFile(int selectedMonth, int year)
     {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        using (var package = new ExcelPackage())
+        var fileInfo = new FileInfo(_excelPath);
+        using (var package = new ExcelPackage(fileInfo))
         {
-            var worksheet = package.Workbook.Worksheets.Add("Events");
+            // 'Sayfa1' sayfasını oku
+            var sheet = package.Workbook.Worksheets["Sayfa1"];
+            int totalRows = sheet.Dimension.End.Row;
 
-            // Create a dictionary to map day numbers to column indexes
-            var dayColumnMap = new Dictionary<int, int>();
-
-            // Find all unique days and sort them
-            var uniqueDays = events.SelectMany(e => e.AssignedDays).Distinct().OrderBy(day => day).ToList();
-
-            // Set column headers for days
-            int columnIndex = 1;
-            foreach (var day in uniqueDays)
-            {
-                // Check if the day is valid for the given month and year
-                int daysInMonth = DateTime.DaysInMonth(year, DateTime.ParseExact(monthName, "MMMM", CultureInfo.CurrentCulture).Month);
-                if (day < 1 || day > daysInMonth)
-                {
-                    Console.WriteLine($"Invalid day: {day} in {monthName} {year}");
-                    continue;
-                }
-
-                DateTime dateValue = new DateTime(year, DateTime.ParseExact(monthName, "MMMM", CultureInfo.CurrentCulture).Month, day);
-                worksheet.Cells[1, columnIndex].Value = dateValue.ToString("dd MMMM yyyy dddd");
-                dayColumnMap[day] = columnIndex;
-                columnIndex++;
-            }
-
-            // Check if the events list is empty
-            if (events == null || !events.Any())
-            {
-                Console.WriteLine("Events list is empty.");
-                return; // Exit if the list is empty
-            }
-
-            // Write data to the Excel sheet
-            foreach (var day in uniqueDays)
-            {
-                int row = 2; // Start from the second row for each day
-                foreach (var e in events.Where(x => x.AssignedDays.Contains(day)))
-                {
-                    if (!dayColumnMap.ContainsKey(day))
-                    {
-                        Console.WriteLine($"Day {day} is not mapped in dayColumnMap.");
-                        continue; // Skip this day if not mapped
-                    }
-
-                    var cell = worksheet.Cells[row, dayColumnMap[day]];
-                    cell.Value = e.title; // Write the employee's name
-
-                    // Set the cell color based on the team
-                    cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    switch (e.team)
-                    {
-                        case "Bankacılık":
-                            cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Blue);
-                            break;
-                        case "Dijital Uygulama":
-                            cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
-                            break;
-                            // Add more cases for other teams as needed
-                    }
-                    row++;
-                }
-            }
-
-            worksheet.Cells.AutoFitColumns();
-
-            // Set the file name and save the package
-            string fileName = $"{monthName}_{year}.xlsx";
+            // Masaüstüne kaydetmek için dosya yolu oluştur
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string fileName = $"{selectedMonth}_{year}.xlsx";
             string fullPath = Path.Combine(desktopPath, fileName);
 
-            FileInfo file = new FileInfo(fullPath);
-            package.SaveAs(file);
+            // Yeni Excel dosyası için hazırlık
+            //var newFile = new FileInfo($"{selectedMonth}_{year}.xlsx");
+            using (var newPackage = new ExcelPackage(new FileInfo(fullPath)))
+            {
+                var newSheet = newPackage.Workbook.Worksheets.Add("Events");
+
+                // Sütun başlıklarını ve çalışanları toplama
+                var employeesByDate = new Dictionary<DateTime, List<string>>();
+                var teamsByEmployee = new Dictionary<string, string>();
+
+                for (int row = 2; row <= totalRows; row++)
+                {
+                    string title = sheet.Cells[row, 1].Value.ToString();
+                    DateTime start = DateTime.ParseExact(sheet.Cells[row, 2].Value.ToString(), "dd.MM.yyyy", CultureInfo.InvariantCulture);
+                    string team = sheet.Cells[row, 4].Value.ToString();
+
+                    // Ay ve yıl kontrolü
+                    if (start.Month == selectedMonth && start.Year == year)
+                    {
+                        if (!employeesByDate.ContainsKey(start))
+                            employeesByDate[start] = new List<string>();
+                        employeesByDate[start].Add(title);
+
+                        if (!teamsByEmployee.ContainsKey(title))
+                            teamsByEmployee[title] = team;
+                    }
+                }
+
+                // Sütun başlıklarını ve verileri yazma
+                int columnIndex = 1;
+                foreach (var date in employeesByDate.Keys.OrderBy(d => d))
+                {
+                    newSheet.Cells[1, columnIndex].Value = date.ToString("dd MMMM yyyy dddd");
+
+                    int rowIndex = 2;
+                    foreach (var employee in employeesByDate[date])
+                    {
+                        newSheet.Cells[rowIndex, columnIndex].Value = employee;
+
+                        var cell = newSheet.Cells[rowIndex, columnIndex];
+                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(GetTeamColor(teamsByEmployee[employee]));
+
+                        rowIndex++;
+                    }
+                    columnIndex++;
+                }
+
+                newSheet.Cells.AutoFitColumns();
+                newPackage.Save();
+            }
+        }
+    }
+
+    private System.Drawing.Color GetTeamColor(string team)
+    {
+        switch (team)
+        {
+            case "Bankacılık":
+                return System.Drawing.Color.SkyBlue;
+            case "Dijital Uygulama":
+                return System.Drawing.Color.PaleVioletRed;
+            default:
+                return System.Drawing.Color.Black; // Varsayılan renk
         }
     }
 
@@ -929,4 +929,61 @@ public class ExcelService
             package.Save();
         }
     }
+
+    public void CreateMonthlyExcelFileManager(int selectedMonth, int year)
+    {
+        var fileInfo = new FileInfo(_excelPath);
+        using (var package = new ExcelPackage(fileInfo))
+        {
+            // 'Manager' sayfasını oku
+            var sheet = package.Workbook.Worksheets["Manager"];
+            int totalRows = sheet.Dimension.End.Row;
+
+            // Masaüstüne kaydetmek için dosya yolu oluştur
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string fileName = $"{selectedMonth}_{year}_Yöneticiler.xlsx";
+            string fullPath = Path.Combine(desktopPath, fileName);
+
+            using (var newPackage = new ExcelPackage(new FileInfo(fullPath)))
+            {
+                var newSheet = newPackage.Workbook.Worksheets.Add("Events");
+
+                // Sütun başlıklarını ve çalışanları toplama
+                var employeesByDate = new Dictionary<DateTime, List<string>>();
+
+                for (int row = 2; row <= totalRows; row++)
+                {
+                    string title = sheet.Cells[row, 1].Value.ToString();
+                    DateTime start = DateTime.ParseExact(sheet.Cells[row, 2].Value.ToString(), "dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+                    // Ay ve yıl kontrolü
+                    if (start.Month == selectedMonth && start.Year == year)
+                    {
+                        if (!employeesByDate.ContainsKey(start))
+                            employeesByDate[start] = new List<string>();
+                        employeesByDate[start].Add(title);
+                    }
+                }
+
+                // Sütun başlıklarını ve verileri yazma
+                int columnIndex = 1;
+                foreach (var date in employeesByDate.Keys.OrderBy(d => d))
+                {
+                    newSheet.Cells[1, columnIndex].Value = date.ToString("dd MMMM yyyy dddd");
+
+                    int rowIndex = 2;
+                    foreach (var employee in employeesByDate[date])
+                    {
+                        newSheet.Cells[rowIndex, columnIndex].Value = employee;
+                        rowIndex++;
+                    }
+                    columnIndex++;
+                }
+
+                newSheet.Cells.AutoFitColumns();
+                newPackage.Save();
+            }
+        }
+    }
+
 }
