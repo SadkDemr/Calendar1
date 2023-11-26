@@ -214,13 +214,6 @@ namespace Calendar1.Controllers
         }
 
 
-
-
-
-
-
-
-
     }
 
 }

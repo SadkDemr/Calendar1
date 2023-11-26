@@ -96,6 +96,7 @@ public class ExcelService
         using (var package = new ExcelPackage(new FileInfo(_excelPath)))
         {
             var worksheet = package.Workbook.Worksheets[0];
+            var worksheet2 = package.Workbook.Worksheets["Employees"];
             var rowCount = worksheet.Dimension.Rows;
 
             for (int row = 2; row <= rowCount; row++)
@@ -639,6 +640,40 @@ public class ExcelService
                 return System.Drawing.Color.PaleVioletRed;
             default:
                 return System.Drawing.Color.Black; // Varsayılan renk
+        }
+    }
+
+    public void DeleteEmployee(string employeeName)
+    {
+        bool deleted = false;
+
+        // Excel dosyasını yükleyin
+        var fileInfo = new FileInfo(_excelPath);
+        using (var package = new ExcelPackage(fileInfo))
+        {
+            var worksheet = package.Workbook.Worksheets[0]; // İlk çalışma sayfasını alın
+            int totalRows = worksheet.Dimension.End.Row;
+
+            for (int row = 2; row <= totalRows; row++)
+            {
+                if ((worksheet.Cells[row, 1].Value?.ToString() ?? string.Empty) == employeeName)
+                {
+                    worksheet.DeleteRow(row);
+                    deleted = true;
+                    break; // İsim bulunduğunda döngüden çık
+                }
+            }
+
+            // Değişiklikleri kaydedin, eğer silme işlemi yapıldıysa
+            if (deleted)
+            {
+                package.Save();
+            }
+            else
+            {
+                // Eğer çalışan bulunamazsa hata fırlat
+                throw new Exception($"Çalışan bulunamadı: {employeeName}");
+            }
         }
     }
 
