@@ -189,11 +189,6 @@ namespace Calendar1.Controllers
             return RedirectToAction("AddDeskRecord");
         }
 
-        [HttpPost]
-        public void SetSelectedMonth(int selectedMonth)
-        {
-            Session["SelectedMonth"] = selectedMonth;
-        }
 
 
         [HttpPost]
@@ -209,7 +204,7 @@ namespace Calendar1.Controllers
                 _excelService.CreateMonthlyExcelFile(selectedMonth, year);
 
                 // Başarılı mesajı dön
-                return Json(new { success = true, message = $"{monthName} ayına ait etkinlikler Excel'e aktarıldı." });
+                return RedirectToAction("AddDeskRecord");
             }
             catch (Exception ex)
             {

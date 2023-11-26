@@ -84,28 +84,40 @@
                         </div>
 
                         <script type="text/javascript">
-                            $(document).ready(function() {
-    $('#exportExcelForm').submit(function(event) {
-        event.preventDefault(); // Formun normal gönderimini engelle
+                            $(document).ready(function () {
+                                // Export Events to Excel Form
+                                $('#exportExcelForm').on('submit', function (event) {
+                                    event.preventDefault(); // Form gönderimini engellemek için
 
-        var selectedMonth = $('#selectedMonthForExport').val();
+                                    var selectedMonth = $('#selectedMonthForExport').val();
 
-        // AJAX isteği ile ExportEventsToExcel metodunu çağır
-        $.ajax({
-            url: '@Url.Action("ExportEventsToExcel", "Home")',
-            type: 'POST',
-            data: { selectedMonth: selectedMonth },
-            success: function(response) {
-                alert(response.message);
-            },
-            error: function(error) {
-                alert('Bir hata oluştu: ' + error.responseText);
-            }
-        });
-    });
-});
+                                    // AJAX isteği başlatılıyor
+                                    $.ajax({
+                                        url: '@Url.Action("ExportEventsToExcel", "Home")', // Controller'ın URL'si
+                                        type: 'POST',
+                                        data: { selectedMonth: selectedMonth },
+                                        dataType: 'json', // JSON formatında yanıt bekliyoruz
+                                        success: function (response) {
+                                            // Başarılı dönüş yapıldı, mesajı modalın içine yerleştir ve modalı aç
+                                            $('#messageModal .modal-body').text(response.message);
+                                            $('#messageModal').modal('show');
+                                        },
+                                        error: function (jqXHR, textStatus, errorThrown) {
+                                            // Hata oluştu, hatayı modalın içine yerleştir ve modalı aç
+                                            $('#messageModal .modal-body').text('Hata: ' + errorThrown);
+                                            $('#messageModal').modal('show');
+                                        }
+                                    });
+                                });
+
+                                // Diğer formlar için benzer şekilde işlem yapabilirsiniz
+                                // Örnek:
+                                // $('#assignDesksForm').on('submit', function(event) { ... });
+                                // $('#deleteForm').on('submit', function(event) { ... });
+                            });
 
                         </script>
+
 
                     </div>
                 </div>
@@ -145,6 +157,25 @@
             </div>
         </div>
     </div>
+
+
+    <!-- Bootstrap Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="messageModalLabel">Mesaj</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Mesaj içeriği buraya gelecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>

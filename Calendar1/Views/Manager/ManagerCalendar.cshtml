@@ -83,13 +83,26 @@
                         </div>
 
                         <script type="text/javascript">
-                           $(document).ready(function() {
-                              $('#exportExcelForm').submit(function() {
-                                   var selectedMonth = $('#selectedMonthForExport').val();
-                                    // AJAX ile seçilen ayı Session'a kaydedin
-                                    $.post('@Url.Action("SetSelectedMonth", "Manager")', { selectedMonth: selectedMonth });
-                                 });
-                            });
+                            $(document).ready(function() {
+    $('#exportExcelForm').submit(function(event) {
+        event.preventDefault(); // Formun normal gönderimini engelle
+
+        var selectedMonth = $('#selectedMonthForExport').val();
+
+        // AJAX isteği ile ExportEventsToExcel metodunu çağır
+        $.ajax({
+            url: '@Url.Action("ExportEventsToExcel", "Manager")',
+            type: 'POST',
+            data: { selectedMonth: selectedMonth },
+            success: function(response) {
+                alert(response.message);
+            },
+            error: function(error) {
+                alert('Bir hata oluştu: ' + error.responseText);
+            }
+        });
+    });
+});
                         </script>
 
 

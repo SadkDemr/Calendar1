@@ -145,11 +145,10 @@ namespace Calendar1.Controllers
         }
 
         [HttpPost]
-        public ActionResult ExportEventsToExcel()
+        public ActionResult ExportEventsToExcel(int selectedMonth)
         {
             try
             {
-                int selectedMonth = (int)(Session["SelectedMonth"] ?? DateTime.Now.Month);
                 int year = DateTime.Now.Year;
                 string monthName = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(selectedMonth);
 
